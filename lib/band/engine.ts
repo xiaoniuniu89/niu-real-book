@@ -34,6 +34,8 @@ export interface PlayOpts {
   hits?: Hit[];
 }
 
+const COUNT_IN_BARS = 2;
+
 interface Item { idx?: number; chorus?: number; k?: number; countIn?: boolean; ending?: boolean; beats?: number; round?: number }
 interface Visual { time: number; beat?: number; beats?: number; idx?: number; chorus?: number; countIn?: boolean; end?: boolean; keyShift?: number }
 
@@ -174,7 +176,7 @@ export class Band {
     // the sequence of bars to play
     const items: Item[] = [];
     const beats0 = (song.bars[0] && song.bars[0].beats) || 4;
-    if (opts.countIn !== false) items.push({ countIn: true, beats: beats0 });
+    if (opts.countIn !== false) for (let k = 0; k < COUNT_IN_BARS; k++) items.push({ countIn: true, beats: beats0 });
     this.twoFeelHead = false;
     if (opts.loop) {
       this.loopRange = opts.loop;
