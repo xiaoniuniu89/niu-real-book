@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useApp } from "../AppProvider";
 import { Icon } from "../Icon";
 import { InstallApp } from "../InstallApp";
+import { HowTos } from "../HowTos";
 import { TOUR_EVENT } from "../Tour";
 import { WHATS_NEW_EVENT } from "../WhatsNew";
 import { ThemeToggle } from "../TopBar";
@@ -18,7 +19,7 @@ type Tab = typeof TABS[number][0];
 /** One line under the tabs saying what the open tab is for. */
 const ABOUT: Record<Exclude<Tab, "kit">, string> = {
   connections: "Put your gigs in your phone's calendar, and choose what plays recordings.",
-  help: "Take the tour again, see what's new, switch between light and dark, or install the app on this device.",
+  help: "Short how-tos, take the tour again, see what's new, switch between light and dark, or install the app on this device.",
 };
 let lastTab: Tab = "kit"; // remembered while the app is open
 
@@ -76,6 +77,7 @@ export function AccountView() {
       {tab === "connections" && <Connections />}
 
       {tab === "help" && <section className="acct-sec" role="tabpanel" aria-label="Help">
+        <HowTos />
         <div className="row-btns"><button className="btn small" type="button" onClick={() => window.dispatchEvent(new Event(TOUR_EVENT))}><Icon name="help" size={16} /> Take the tour</button><button className="btn small" type="button" onClick={() => window.dispatchEvent(new Event(WHATS_NEW_EVENT))}>What&apos;s new</button><ThemeToggle labelled /></div>
       </section>}
     </>

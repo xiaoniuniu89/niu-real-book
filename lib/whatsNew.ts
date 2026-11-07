@@ -2,6 +2,12 @@
 // New features only: no entry for bug fixes or small tweaks (musicians don't care about those).
 export const WHATS_NEW: { date: string; items: string[] }[] = [
   {
+    date: "2026-11-28",
+    items: [
+      "Short how-tos are in Account → Help: adding recordings, notes and charts, and making setlists, gigs and bands. The tour is up to date too.",
+    ],
+  },
+  {
     date: "2026-11-27",
     items: [
       "A note can now be just a recording or a file, with no need to type anything.",

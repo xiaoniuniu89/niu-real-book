@@ -236,7 +236,7 @@ function SongBody({ cur: cur0, setlist }: { cur: TuneCurrent; setlist?: Setlist 
           {cur.kind === "lib" && <MakeArrangement raw={cur0.song.raw} shift={prefs.libShift[sg.title + "|" + sg.composer] ?? null} versions={[]} />}
           {arr && <ArrangementActions arr={arr} />}
           <Link className="btn" href={pageHref + "/chart"}><Icon name="music" size={18} /> Chart view</Link>
-          <button className="btn phone-only" onClick={() => { app.setDockSize("full"); setTimeout(() => document.getElementById("song-recordings")?.scrollIntoView({ block: "start" }), 250); }}><Icon name="play" size={18} /> Recordings</button>
+          <button className="btn phone-only" data-tour="recordings-btn" onClick={() => { app.setDockSize("full"); setTimeout(() => document.getElementById("song-recordings")?.scrollIntoView({ block: "start" }), 250); }}><Icon name="play" size={18} /> Recordings</button>
           {!arr && (prevHref ? <Link className="btn icon-btn" href={prevHref} aria-label="Previous tune">‹</Link> : <a className="btn icon-btn" aria-disabled="true" aria-label="Previous tune">‹</a>)}
           {!arr && (nextHref ? <Link className="btn icon-btn" href={nextHref} aria-label="Next tune">›</Link> : <a className="btn icon-btn" aria-disabled="true" aria-label="Next tune">›</a>)}
         </div>
@@ -658,7 +658,7 @@ function Recordings({ cur, versions, onVersions, canEdit }: { cur: Current; vers
   const tab = pickTab && tabs.some(x => x[0] === pickTab) ? pickTab : nSaved || playing ? "saved" : tabs[0][0];
 
   return (
-    <section className="panel" id="song-recordings" aria-label="Recordings">
+    <section className="panel" id="song-recordings" data-tour="recordings" aria-label="Recordings">
       <div className="panel-head"><h2>Recordings</h2></div>
       {tabs.length > 1 && (
         <div className="pl-tabs" role="tablist" aria-label="Recordings">
