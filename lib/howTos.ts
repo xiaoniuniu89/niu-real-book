@@ -4,7 +4,7 @@ export const HOW_TOS: { title: string; steps: string[]; note?: string }[] = [
     "Open the setlist and tap the tune.",
     "Tap Recordings (on a computer it's already on the right).",
     "Tap Upload, then Upload a recording or Record.",
-  ], note: "MP3, WAV or AAC M4A, up to 25 MB. Apple Lossless won't upload. On an iPhone, set Voice Memos to Compressed in Settings." },
+  ], note: "MP3, WAV or M4A, up to 25 MB. Apple Lossless files get a playable copy automatically." },
   { title: "Add a note, with or without audio", steps: [
     "Open the tune and go to Notes.",
     "Tap Add note.",

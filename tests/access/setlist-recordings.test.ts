@@ -58,6 +58,14 @@ describe("setlist recordings", () => {
     expect(must(await M.ava.sb.from("setlist_recordings").delete().eq("path", r.path).select("id"), "ava")).toHaveLength(1);
   });
 
+  it("only the uploader repoints a recording, and only within their own folder (0055)", async () => {
+    const r = await add("ben");
+    expect(must(await M.ava.sb.from("setlist_recordings").update({ size: 2 }).eq("path", r.path).select("id"), "owner of the setlist")).toHaveLength(0);
+    expect((await M.ben.sb.from("setlist_recordings").update({ path: `${USERS.ava.id}/${set}/x.mp3` }).eq("path", r.path)).error).toBeTruthy();
+    expect((await M.ben.sb.from("setlist_recordings").update({ owner: USERS.ava.id }).eq("path", r.path)).error).toBeTruthy();
+    expect(must(await M.ben.sb.from("setlist_recordings").update({ size: 2 }).eq("path", r.path).select("id"), "uploader")).toHaveLength(1);
+  });
+
   it("a tune holds 10 at most", async () => {
     await clearLog();
     const key = "scratch|full";

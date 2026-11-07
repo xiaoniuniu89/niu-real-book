@@ -1,6 +1,6 @@
 // Supabase adapter: setlists, their items and library playlists in Postgres, guarded by row-level security
 // (see supabase/migrations/0001_init.sql). Used when Supabase is configured and someone is signed in.
-import { checkAudio } from "../audioFile";
+import { APPLE_LOSSLESS, checkAudio, isLosslessFile } from "../audioFile";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { normalizeSettings } from "../settings";
 import { plainError } from "../validate";
@@ -316,6 +316,20 @@ export function supabaseStore(sb: SupabaseClient, userId: string): DataStore {
       x.onerror = () => reject(new Error(`Couldn't upload ${file.name}: no connection.`));
       x.send(file);
     });
+  };
+
+  /** Swaps an uploaded Apple Lossless recording for a playable copy; if that fails, it's taken out again and you're told why. */
+  const convertRecording = async (table: string, bucket: string, path: string): Promise<{ path: string; mime: string; size: number }> => {
+    const { data: sess } = await sb.auth.getSession();
+    const res = await fetch("/api/audio/convert", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + (sess.session?.access_token || "") },
+      body: JSON.stringify({ table, path }),
+    }).catch(() => null);
+    if (res?.ok) return await res.json() as { path: string; mime: string; size: number };
+    await sb.from(table).delete().eq("path", path);
+    await sb.storage.from(bucket).remove([path]);
+    throw new Error(APPLE_LOSSLESS);
   };
 
   /** Uploads `file` under `dir` and records it as an attachment with `parent` ({ note_id } or { lick_id }). */
@@ -987,7 +1001,7 @@ export function supabaseStore(sb: SupabaseClient, userId: string): DataStore {
     async addTuneRecording(setlistId, key, file, onProgress) {
       if (attachmentKind(file.type, file.name) !== "audio") throw new Error("That isn't an audio file. Try an MP3, M4A or WAV.");
       if (file.size > MAX_RECORDING_MB * 1024 * 1024) throw new Error(`That file is over ${MAX_RECORDING_MB} MB.`);
-      await checkAudio(file);
+      const lossless = await isLosslessFile(file);
       const rec = { path: `${userId}/${setlistId}/${newUuid()}-${safeName(file.name)}`, name: file.name.slice(0, 300), mime: mimeOf(file), size: file.size };
       const { error } = await sb.from("setlist_recordings").insert({ setlist_id: setlistId, song_key: key, ...rec });
       if (error) {
@@ -996,7 +1010,7 @@ export function supabaseStore(sb: SupabaseClient, userId: string): DataStore {
       }
       try { await putFile(TUNE_RECORDING_BUCKET, rec.path, file, rec.mime, onProgress); }
       catch (e) { await sb.from("setlist_recordings").delete().eq("path", rec.path); throw e; }
-      return { ...rec, ownerName: "You", mine: true };
+      return { ...rec, ...(lossless ? await convertRecording("setlist_recordings", TUNE_RECORDING_BUCKET, rec.path) : {}), ownerName: "You", mine: true };
     },
 
     async removeTuneRecording(rec) {
@@ -1014,7 +1028,7 @@ export function supabaseStore(sb: SupabaseClient, userId: string): DataStore {
     async addOriginalRecording(o, file, onProgress) {
       if (attachmentKind(file.type, file.name) !== "audio") throw new Error("That isn't an audio file. Try an MP3, M4A or WAV.");
       if (file.size > MAX_RECORDING_MB * 1024 * 1024) throw new Error(`That file is over ${MAX_RECORDING_MB} MB.`);
-      await checkAudio(file);
+      const lossless = await isLosslessFile(file);
       const rec = { path: `${userId}/${o.id}/${newUuid()}-${safeName(file.name)}`, name: file.name.slice(0, 300), mime: mimeOf(file), size: file.size };
       const { error } = await sb.from("original_recordings").insert({ song_id: o.id, ...rec });
       if (error) {
@@ -1023,7 +1037,7 @@ export function supabaseStore(sb: SupabaseClient, userId: string): DataStore {
       }
       try { await putFile(RECORDING_BUCKET, rec.path, file, rec.mime, onProgress); }
       catch (e) { await sb.from("original_recordings").delete().eq("path", rec.path); throw e; }
-      return { ...o, recordings: [...o.recordings, rec] };
+      return { ...o, recordings: [...o.recordings, lossless ? { ...rec, ...await convertRecording("original_recordings", RECORDING_BUCKET, rec.path) } : rec] };
     },
 
     async removeOriginalRecording(o, rec) {

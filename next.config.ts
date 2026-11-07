@@ -2,6 +2,9 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  // the audio converter runs this binary, so it has to ship with that one route, unbundled
+  serverExternalPackages: ["ffmpeg-static"],
+  outputFileTracingIncludes: { "/api/audio/convert": ["./node_modules/ffmpeg-static/ffmpeg"] },
   async headers() {
     return [
       {

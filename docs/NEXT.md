@@ -15,6 +15,7 @@ What's left to do, in order. Last updated 2026-11-06. Update it at the end of ea
 - Still to do: drop the empty `recording_*` columns on `original_songs` in a new migration.
 - `setlist_recordings` (0054): anyone who can edit a setlist adds recordings to its tunes (Recordings → Upload), kept to that setlist. The Listen tab's hint only knows about originals' uploads.
 - A note can now be just a file (it was refused with "Write a note first"). Phones get a Recordings button on the tune page, because the drawer is shut there.
+- Apple Lossless on song and setlist-tune recordings: uploaded as is, then `/api/audio/convert` swaps it for AAC with ffmpeg-static (Work in progress; check it on Vercel). Notes, charts and Transcribe still refuse or don't convert.
 - Check: CI e2e failed on 2e1313c with React hydration error #418 (home, licks, band access). Not reproduced on a production build locally.
 
 ## Recordings and lead sheets (2026-11-07, released)

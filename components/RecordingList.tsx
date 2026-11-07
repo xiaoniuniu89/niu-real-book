@@ -9,6 +9,7 @@ import { MenuButton } from "./MenuButton";
 import { Recorder } from "./Attachments";
 import { TranscribeButton } from "./TranscribeButton";
 import { MAX_RECORDING_MB, MAX_SONG_RECORDINGS } from "@/lib/data/types";
+import { isLosslessFile } from "@/lib/audioFile";
 
 interface Rec { path: string; name: string }
 
@@ -38,7 +39,7 @@ function Row<R extends Rec>({ rec, by, url: urlOf, title, onRemove }: { rec: R; 
           { label: <><Icon name="trash" size={16} /> Remove</>, onClick: onRemove },
         ]} />}
       </span>
-      {failed && <p className="flag" role="alert">This recording won&apos;t play in this browser. It may be Apple Lossless: save it as MP3 or AAC and upload it again. {url && <a href={url} download={rec.name}>Download it</a>}</p>}
+      {failed && <p className="flag" role="alert">This recording won&apos;t play in this browser. It may be Apple Lossless: remove it and upload it again, and we&apos;ll make a playable copy. {url && <a href={url} download={rec.name}>Download it</a>}</p>}
     </div>
   );
 }
@@ -56,6 +57,7 @@ export function RecordingList<R extends Rec>({ items, title, by, url, canRemove,
 }) {
   const { toast } = useApp();
   const [status, setStatus] = useState<string | null>(null);
+  const [converting, setConverting] = useState(false);
   const [removing, setRemoving] = useState<R | null>(null);
   const [recording, setRecording] = useState(false);
   const input = useRef<HTMLInputElement>(null);
@@ -63,17 +65,24 @@ export function RecordingList<R extends Rec>({ items, title, by, url, canRemove,
   const full = items.length >= MAX_SONG_RECORDINGS;
   const upload = async (files: File[]) => {
     if (!onAdd) return;
-    let done = 0;
+    let done = 0, made = 0;
     try {
       for (const f of files) {
         const label = files.length > 1 ? `Uploading ${done + 1} of ${files.length}…` : "Uploading…";
+        const lossless = await isLosslessFile(f);
+        if (lossless) made++;
         setStatus(label + " 0%");
-        await onAdd(f, p => setStatus(`${label} ${Math.round(p * 100)}%`));
+        await onAdd(f, p => {
+          // once an Apple Lossless file is up, the server makes the playable copy
+          if (lossless && p >= 1) { setConverting(true); setStatus("This file won't play in most browsers, so we're making a playable copy…"); }
+          else setStatus(`${label} ${Math.round(p * 100)}%`);
+        });
+        setConverting(false);
         done++;
       }
-      toast(done > 1 ? `${done} recordings saved.` : "Recording saved.");
+      toast((done > 1 ? `${done} recordings saved.` : "Recording saved.") + (made ? " We made a playable copy so everyone can hear it." : ""));
     } catch (e) { toast(e instanceof Error ? e.message : "Couldn't save the recording."); }
-    finally { setStatus(null); }
+    finally { setStatus(null); setConverting(false); }
   };
   const remove = async (r: R) => {
     try { await onRemove?.(r); toast("Recording removed."); }
@@ -84,12 +93,12 @@ export function RecordingList<R extends Rec>({ items, title, by, url, canRemove,
     {onAdd && (
       <div className="orig-rec">
         <input ref={input} type="file" multiple accept="audio/*,.mp3,.m4a,.wav,.aac,.ogg" hidden onChange={e => { const f = Array.from(e.target.files ?? []); e.target.value = ""; if (f.length) void upload(f); }} />
-        {status ? <p className="hint" role="status">{status}</p>
+        {status ? <p className="hint" role="status">{status}{converting && <> <span className="stamp wip">Work in progress</span></>}</p>
           : recording ? <Recorder onCancel={() => setRecording(false)} onDone={f => { setRecording(false); void upload([f]); }} />
           : <span className="orig-rec-row">
             <button className="btn" disabled={full} onClick={() => input.current?.click()}><Icon name="upload" size={16} /> Upload {items.length ? "another recording" : "a recording"}</button>
             {canRecord && <button className="btn" disabled={full} onClick={() => setRecording(true)}><Icon name="music" size={16} /> Record</button>}
-            <Info label="About recordings">MP3, WAV or AAC M4A (not Apple Lossless), up to {MAX_RECORDING_MB} MB each and {MAX_SONG_RECORDINGS} here. {about}</Info>
+            <Info label="About recordings">MP3, WAV or M4A, up to {MAX_RECORDING_MB} MB each and {MAX_SONG_RECORDINGS} here. Apple Lossless files get a playable copy. {about}</Info>
           </span>}
         {full && !status && <p className="hint">That&apos;s the most you can add here. Remove one to add another.</p>}
       </div>

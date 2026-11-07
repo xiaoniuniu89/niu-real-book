@@ -23,7 +23,7 @@ Without Supabase settings, everything lives in your browser (IndexedDB), exactly
 2. Tap **Recordings** (on a computer it's already on the right).
 3. Tap **Upload**, then **Upload a recording** or **Record**.
 
-Audio files can be MP3, WAV or AAC M4A, up to 25 MB on a tune or song, or 20 MB on a note or chart. Apple Lossless files won't upload, because most browsers can't play them. In Voice Memos, set Audio Quality to Compressed.
+Audio files can be MP3, WAV or AAC M4A, up to 25 MB on a tune or song, or 20 MB on a note or chart. Most browsers can't play Apple Lossless, so recordings on a tune or song get a playable copy automatically. Notes and charts refuse those files. In Voice Memos, set Audio Quality to Compressed.
 
 **Add a note, with or without audio**
 1. Open the tune and go to **Notes**.

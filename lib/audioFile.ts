@@ -9,8 +9,13 @@ export function isAppleLossless(b: Uint8Array): boolean {
   return false;
 }
 
+/** Is this file Apple Lossless? */
+export async function isLosslessFile(file: File): Promise<boolean> {
+  if (!/\.(m4a|mp4|m4b|caf)$/i.test(file.name) && !/mp4|m4a/i.test(file.type)) return false;
+  return isAppleLossless(new Uint8Array(await file.arrayBuffer()));
+}
+
 /** Throws when a recording won't play for people. Only looks inside MP4-style files. */
 export async function checkAudio(file: File): Promise<void> {
-  if (!/\.(m4a|mp4|m4b|caf)$/i.test(file.name) && !/mp4|m4a/i.test(file.type)) return;
-  if (isAppleLossless(new Uint8Array(await file.arrayBuffer()))) throw new Error(APPLE_LOSSLESS);
+  if (await isLosslessFile(file)) throw new Error(APPLE_LOSSLESS);
 }
