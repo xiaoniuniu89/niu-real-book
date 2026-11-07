@@ -172,6 +172,9 @@ interface Ctx {
   /** Where the page puts its side panels (recordings and so on) inside the drawer. */
   drawerSlot: HTMLElement | null;
   setDrawerSlot(el: HTMLElement | null): void;
+  /** An uploaded recording still playing after its page closed (say, on to chart view): the drawer picks it up where it was. */
+  carried: Carried | null;
+  carry(c: Carried | null): void;
   playSpotify(uri: string, play: boolean): Promise<void>;
   /** YouTube: play a list of videos in order from `start`; a song with no `id` gets its automatic pick (searched once, ever). */
   playYoutube(queue: YtQueueItem[], start?: number, setName?: string): Promise<void>;
@@ -238,6 +241,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [gig, setGigState] = useState<Gig | null>(null);
   const [band, setBand] = useState<Band | null>(null);
   const [drawerSlot, setDrawerSlot] = useState<HTMLElement | null>(null);
+  const [carried, carry] = useState<Carried | null>(null);
 
   // refs mirror state for the long-lived band / player listeners
   const setlistsRef = useRef(setlists); setlistsRef.current = setlists;
@@ -817,10 +821,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     settings, updateSettings, prefs, updatePrefs, toast, toastMsg, crumb, setCrumb,
     current, setCurrent, shiftOf, setShift, tempoFor,
     band, bandPlaying, bandFor, bandStatus, tempo, setTempo, loop, setLoop, startBand, stopBand, setMute, setLevel, bandKeyShift, markBar, lastBar,
-    setDockTab, setDockSize, embedRef, drawerSlot, setDrawerSlot, playSpotify, playYoutube, ytStep, ytPlaying, ytToggle: () => { if (ytPlaying) ytPlayerRef.current?.pause(); else ytPlayerRef.current?.resume(); }, ytEmbedRef, recKind, ytPos: yt && { pos: yt.pos, count: yt.queue.length }, ytNow: yt?.now && recKind === "youtube" ? { key: yt.queue[yt.pos].key, ...yt.now } : null, recTitle: recTitle || (settings.player === "youtube" ? "YouTube" : "Spotify"), recIdle: !recTitle, recStatus, follow, setFollow,
+    setDockTab, setDockSize, embedRef, drawerSlot, setDrawerSlot, carried, carry, playSpotify, playYoutube, ytStep, ytPlaying, ytToggle: () => { if (ytPlaying) ytPlayerRef.current?.pause(); else ytPlayerRef.current?.resume(); }, ytEmbedRef, recKind, ytPos: yt && { pos: yt.pos, count: yt.queue.length }, ytNow: yt?.now && recKind === "youtube" ? { key: yt.queue[yt.pos].key, ...yt.now } : null, recTitle: recTitle || (settings.player === "youtube" ? "YouTube" : "Spotify"), recIdle: !recTitle, recStatus, follow, setFollow,
     gig, startGig,
   };
   return <AppCtx.Provider value={value}>{children}</AppCtx.Provider>;
 }
+
+/** An uploaded recording handed to the drawer: where it is, what to call it, and how far in it got. */
+export interface Carried { url: string; name: string; title: string; time: number }
 
 export const supabaseEnabled = supabaseConfigured;

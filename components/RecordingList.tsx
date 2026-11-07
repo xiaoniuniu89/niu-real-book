@@ -1,6 +1,6 @@
 "use client";
 // Uploaded recordings: a player for each and, where you're allowed, Upload, Record and Remove.
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useApp } from "./AppProvider";
 import { ConfirmTyped } from "./ConfirmTyped";
 import { Icon } from "./Icon";
@@ -14,7 +14,16 @@ import { isLosslessFile } from "@/lib/audioFile";
 interface Rec { path: string; name: string }
 
 function Row<R extends Rec>({ rec, by, url: urlOf, title, onRemove }: { rec: R; by: string; url: (r: R) => Promise<string>; title: string; onRemove?: () => void }) {
+  const { carry } = useApp();
   const [url, setUrl] = useState<string | null>(null);
+  const audio = useRef<HTMLAudioElement>(null);
+  const handOff = useRef(() => {});
+  handOff.current = () => {
+    const a = audio.current;
+    if (a && url && !a.paused && !a.ended) carry({ url, name: rec.name, title, time: a.currentTime });
+  };
+  // leaving the page (chart view, say) would stop it: the drawer carries on from here. Layout cleanup runs before the element goes.
+  useLayoutEffect(() => () => handOff.current(), []);
   const [failed, setFailed] = useState(false);
   const urlRef = useRef(urlOf); urlRef.current = urlOf;
   useEffect(() => {
@@ -33,7 +42,7 @@ function Row<R extends Rec>({ rec, by, url: urlOf, title, onRemove }: { rec: R; 
     <div className="orig-rec">
       <span className="name"><span className="eyebrow">{by}</span> {rec.name}</span>
       <span className="orig-rec-row">
-        <audio controls preload="none" src={url ?? undefined} aria-label={"Recording of " + title + ": " + rec.name} onError={() => void onError()} />
+        <audio ref={audio} controls preload="none" src={url ?? undefined} onPlay={() => carry(null)} aria-label={"Recording of " + title + ": " + rec.name} onError={() => void onError()} />
         {url && <TranscribeButton source={{ kind: "file", name: rec.name, url }} />}
         {onRemove && <MenuButton className="btn icon-btn small" caret={false} ariaLabel={"More for " + rec.name} label="⋯" items={[
           { label: <><Icon name="trash" size={16} /> Remove</>, onClick: onRemove },

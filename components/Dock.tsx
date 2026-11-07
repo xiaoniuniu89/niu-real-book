@@ -173,7 +173,14 @@ export function Dock() {
                 {app.recIdle && !app.recStatus ? "" : app.recStatus}
               </span>
             </div>
-            {app.recIdle && !app.recStatus && (
+            {app.carried && (
+              <div className="orig-rec">
+                <span className="name"><span className="eyebrow">{app.carried.title}</span> {app.carried.name}</span>
+                <audio key={app.carried.url + app.carried.time} controls autoPlay src={app.carried.url} aria-label={"Recording of " + app.carried.title + ": " + app.carried.name}
+                  onLoadedMetadata={e => { if (app.carried) e.currentTarget.currentTime = app.carried.time; }} onEnded={() => app.carry(null)} />
+              </div>
+            )}
+            {app.recIdle && !app.recStatus && !app.carried && (
               <div className="rec-empty">
                 <b>Nothing playing yet</b>
                 {uploaded
