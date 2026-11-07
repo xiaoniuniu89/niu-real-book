@@ -2,6 +2,12 @@
 // New features only: no entry for bug fixes or small tweaks (musicians don't care about those).
 export const WHATS_NEW: { date: string; items: string[] }[] = [
   {
+    date: "2026-11-29",
+    items: [
+      "Recordings in Apple Lossless, which most browsers can't play, now get a playable copy when you upload them to a song or a setlist tune. It's a work in progress, so tell us if one doesn't work.",
+    ],
+  },
+  {
     date: "2026-11-28",
     items: [
       "Short how-tos are in Account → Help: adding recordings, notes and charts, and making setlists, gigs and bands. The tour is up to date too.",
